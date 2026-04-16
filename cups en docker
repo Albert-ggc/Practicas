@@ -1,0 +1,111 @@
+🖨️ Servidor de Impresión con CUPS en Docker
+
+
+
+
+
+
+
+
+📌 Descripción
+
+Este proyecto implementa un servidor de impresión utilizando CUPS dentro de un contenedor Docker, permitiendo:
+
+🖨️ Administración de impresoras vía web
+🌐 Acceso remoto desde la red local
+📄 Impresión virtual (PDF)
+🔗 Integración con máquina host (Windows/Linux)
+⚙️ Prerrequisitos
+sudo apt update && sudo apt upgrade -y
+
+✔ Requisitos:
+
+Docker instalado
+Red funcional (Bridge o misma red LAN)
+Permisos sudo
+🐳 Paso 1: Descargar imagen de CUPS
+docker pull olbat/cupsd
+
+👉 Esta imagen incluye CUPS listo para usar
+
+🚀 Paso 2: Crear contenedor
+docker run -d \
+--name cups-server \
+-p 631:631 \
+--restart unless-stopped \
+olbat/cupsd
+🔍 Explicación
+-p 631:631 → expone CUPS en el host
+--restart unless-stopped → persistencia
+-d → modo background
+🔎 Paso 3: Verificar contenedor
+docker ps
+🌐 Paso 4: Acceder a la interfaz web
+
+👉 Abrir navegador:
+
+http://IP_SERVIDOR:631
+⚙️ Paso 5: Configurar CUPS
+Ir a Administration
+Seleccionar Add Printer
+Elegir:
+Printer Local / Virtual
+Configurar nombre y descripción
+🔹 Habilitar administración remota (si es necesario)
+
+Dentro del contenedor:
+
+docker exec -it cups-server bash
+
+Editar configuración:
+
+nano /etc/cups/cupsd.conf
+
+Modificar:
+
+Listen 0.0.0.0:631
+
+<Location />
+  Allow all
+</Location>
+
+<Location /admin>
+  Allow all
+</Location>
+
+Reiniciar CUPS:
+
+service cups restart
+💻 Paso 6: Conectar desde máquina local
+🔹 En Windows
+Ir a Agregar impresora
+Seleccionar:
+👉 Impresora de red
+Introducir:
+http://IP_SERVIDOR:631/printers/NOMBRE_IMPRESORA
+🔹 En Linux
+lpadmin -p mi_impresora -E -v http://IP_SERVIDOR:631/printers/NOMBRE_IMPRESORA -m everywhere
+🧪 Paso 7: Prueba
+Imprimir documento (Word / texto)
+Verificar que se procese correctamente
+⚠️ Errores comunes
+❌ No carga la web
+docker logs cups-server
+❌ No conecta desde otra máquina
+Verificar firewall:
+sudo ufw allow 631
+❌ No permite administración
+
+👉 Revisar cupsd.conf (Allow all)
+
+❌ Puerto ocupado
+sudo lsof -i :631
+🔄 Alternativas
+
+✔ Otra imagen:
+
+docker pull linuxserver/cups
+
+✔ Usar volumen persistente:
+
+-v cups_data:/etc/cups
