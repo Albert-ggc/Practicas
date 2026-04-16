@@ -1,0 +1,167 @@
+🔥 Script Automatizado de Firewall (UFW / IPTables)
+
+
+
+
+
+
+
+
+📌 Descripción
+
+Este proyecto implementa un script en Bash que permite automatizar la gestión del firewall:
+
+🔐 Bloquear puertos
+🔓 Desbloquear puertos
+🔁 Elegir entre UFW o IPTables
+🎯 Entrada dinámica por usuario
+
+El objetivo es simplificar la administración del firewall en sistemas Linux.
+
+⚙️ Prerrequisitos
+sudo apt update && sudo apt upgrade -y
+
+✔ Requisitos:
+
+Linux (Debian/Kali/Ubuntu recomendado)
+Permisos sudo
+UFW o IPTables instalados
+📜 SCRIPT: firewall.sh
+nano firewall.sh
+🔹 Contenido del script
+#!/bin/bash
+
+echo "===================================="
+echo "     GESTION DE FIREWALL"
+echo "===================================="
+
+# Preguntar acción
+read -p "¿Qué desea hacer? (bloquear/desbloquear): " ACCION
+
+# Preguntar herramienta
+read -p "¿Con qué desea hacerlo? (ufw/iptables): " HERRAMIENTA
+
+# Preguntar puerto
+read -p "¿Qué puerto desea gestionar?: " PUERTO
+
+# Validar puerto
+if ! [[ "$PUERTO" =~ ^[0-9]+$ ]]; then
+    echo "❌ Puerto inválido"
+    exit 1
+fi
+
+# Convertir a minúsculas
+ACCION=$(echo $ACCION | tr '[:upper:]' '[:lower:]')
+HERRAMIENTA=$(echo $HERRAMIENTA | tr '[:upper:]' '[:lower:]')
+
+echo "------------------------------------"
+
+# UFW
+if [ "$HERRAMIENTA" == "ufw" ]; then
+
+    # Verificar si UFW está instalado
+    if ! command -v ufw &> /dev/null; then
+        echo "❌ UFW no está instalado"
+        exit 1
+    fi
+
+    # Activar UFW si no está activo
+    sudo ufw enable
+
+    if [ "$ACCION" == "bloquear" ]; then
+        sudo ufw deny $PUERTO
+        echo "🔒 Puerto $PUERTO bloqueado con UFW"
+
+    elif [ "$ACCION" == "desbloquear" ]; then
+        sudo ufw allow $PUERTO
+        echo "🔓 Puerto $PUERTO desbloqueado con UFW"
+
+    else
+        echo "❌ Acción inválida"
+    fi
+
+# IPTABLES
+elif [ "$HERRAMIENTA" == "iptables" ]; then
+
+    if [ "$ACCION" == "bloquear" ]; then
+        sudo iptables -A INPUT -p tcp --dport $PUERTO -j DROP
+        echo "🔒 Puerto $PUERTO bloqueado con IPTables"
+
+    elif [ "$ACCION" == "desbloquear" ]; then
+        sudo iptables -D INPUT -p tcp --dport $PUERTO -j DROP
+        echo "🔓 Puerto $PUERTO desbloqueado con IPTables"
+
+    else
+        echo "❌ Acción inválida"
+    fi
+
+else
+    echo "❌ Herramienta inválida"
+fi
+
+echo "------------------------------------"
+echo "Operación finalizada"
+▶️ Ejecución
+chmod +x firewall.sh
+./firewall.sh
+🧪 Ejemplo de uso
+¿Qué desea hacer? bloquear
+¿Con qué desea hacerlo? ufw
+¿Qué puerto desea gestionar? 80
+
+Resultado:
+
+Puerto 80 bloqueado con UFW
+🔍 Verificación
+UFW
+sudo ufw status
+IPTables
+sudo iptables -L
+⚠️ Errores comunes y soluciones
+❌ "ufw: command not found"
+sudo apt install ufw -y
+❌ Regla IPTables no se elimina
+
+👉 Puede que no coincida exactamente:
+
+sudo iptables -L --line-numbers
+sudo iptables -D INPUT NUMERO
+❌ Te bloqueaste SSH (puerto 22)
+
+👉 Solución:
+
+Usar consola directa (VM)
+Ejecutar:
+sudo ufw allow 22
+❌ Reglas no persisten (IPTables)
+sudo apt install iptables-persistent -y
+sudo netfilter-persistent save
+🔄 Alternativas
+
+✔ Detectar automáticamente la herramienta:
+
+if command -v ufw &> /dev/null; then
+    HERRAMIENTA="ufw"
+else
+    HERRAMIENTA="iptables"
+fi
+
+✔ Soportar UDP:
+
+-p udp
+🧠 Explicación técnica (para defensa)
+read → captura entrada del usuario
+if → controla lógica de decisiones
+ufw → firewall simplificado (Debian-based)
+iptables → firewall a bajo nivel
+tr → normaliza entrada (evita errores de mayúsculas)
+validación regex → evita entradas inválidas
+🧠 Conclusión
+
+Este script permite:
+
+Automatizar tareas repetitivas
+Reducir errores humanos
+Adaptarse a diferentes distribuciones
+
+Es una herramienta básica pero potente para administración de firewall.
