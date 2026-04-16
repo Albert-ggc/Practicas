@@ -1,0 +1,133 @@
+🌉 Puente entre NFS y Samba (Linux ↔ Linux ↔ Windows)
+
+
+
+
+
+
+
+
+📌 Descripción
+
+Esta práctica implementa un entorno híbrido de compartición de archivos:
+
+🐧 Linux ↔ Linux → usando NFS
+🪟 Windows ↔ Linux → usando Samba
+🌉 Nodo intermedio (Máquina 2) actúa como puente entre ambos protocolos
+
+👉 Objetivo: que un archivo creado en cualquier máquina sea visible en todas.
+
+🧱 Arquitectura
+[ Máquina 1 (Linux) ] ← NFS → [ Máquina 2 (Linux) ] ← Samba → [ Windows ]
+
+✔ Máquina 2 = puente central
+
+⚙️ Prerrequisitos
+sudo apt update && sudo apt upgrade -y
+
+✔ 2 máquinas Linux
+✔ 1 máquina Windows
+✔ Red en misma LAN (Bridge o Host-Only)
+
+============================================================
+🐧 PARTE 1: NFS (Linux ↔ Linux)
+============================================================
+🔹 Máquina 1 (Servidor NFS)
+Instalar NFS
+sudo apt install nfs-kernel-server -y
+Crear carpeta compartida
+sudo mkdir -p /srv/compartida
+sudo chmod 777 /srv/compartida
+Crear archivo de prueba
+echo "Archivo desde Maquina 1" | sudo tee /srv/compartida/m1.txt
+Configurar export
+sudo nano /etc/exports
+
+Contenido:
+
+/srv/compartida IP_MAQUINA2(rw,sync,no_subtree_check)
+Aplicar cambios
+sudo exportfs -a
+sudo systemctl restart nfs-kernel-server
+🔹 Máquina 2 (Cliente NFS)
+Instalar cliente
+sudo apt install nfs-common -y
+Crear punto de montaje
+sudo mkdir -p /mnt/nfs
+Montar recurso
+sudo mount IP_MAQUINA1:/srv/compartida /mnt/nfs
+============================================================
+🪟 PARTE 2: SAMBA (Linux ↔ Windows)
+============================================================
+🔹 Máquina 2 (Servidor Samba)
+Instalar Samba
+sudo apt install samba -y
+Crear carpeta compartida (MISMA del NFS)
+
+👉 Aquí está el truco del puente:
+
+sudo nano /etc/samba/smb.conf
+
+Agregar:
+
+[Compartida]
+   path = /mnt/nfs
+   browsable = yes
+   read only = no
+   guest ok = yes
+Reiniciar Samba
+sudo systemctl restart smbd
+🔹 Windows
+
+Abrir explorador:
+
+\\IP_MAQUINA2\Compartida
+============================================================
+🧪 PARTE 3: PRUEBAS DE SINCRONIZACIÓN
+============================================================
+🔹 Desde Máquina 1
+echo "Desde M1" > /srv/compartida/test_m1.txt
+🔹 Desde Máquina 2
+echo "Desde M2" > /mnt/nfs/test_m2.txt
+🔹 Desde Windows
+
+Crear archivo:
+
+test_win.txt
+🔹 Verificación
+
+👉 Todos los archivos deben verse en:
+
+Máquina 1 → /srv/compartida
+Máquina 2 → /mnt/nfs
+Windows → carpeta Samba
+⚠️ Errores comunes
+❌ Windows no accede
+Revisar firewall:
+sudo ufw allow samba
+❌ NFS no monta
+showmount -e IP_MAQUINA1
+❌ Permisos
+chmod -R 777 /srv/compartida
+❌ No sincroniza
+
+👉 Verificar que Samba apunte a:
+
+/mnt/nfs
+
+(no a otra carpeta)
+
+🔄 Alternativas
+
+✔ Usar usuarios en Samba (más seguro):
+
+sudo smbpasswd -a usuario
+
+✔ Montaje automático NFS:
+
+sudo nano /etc/fstab
+🧠 Explicación técnica
+NFS → rápido entre Linux
+Samba → compatibilidad con Windows
+Máquina 2 → actúa como traductor entre protocolos
+/mnt/nfs → punto clave del puente
