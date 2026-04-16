@@ -1,0 +1,119 @@
+🔐 Password Recovery + Acceso SSH con Llaves Públicas
+
+
+
+
+
+
+
+
+📌 Descripción
+
+Esta práctica cubre:
+
+🔓 Recuperación de contraseña (root/usuario)
+🔑 Configuración de acceso SSH mediante llaves públicas
+🚫 Eliminación del uso de contraseña en SSH
+
+Simula un escenario real de recuperación y endurecimiento del sistema.
+
+⚙️ Prerrequisitos
+sudo apt update && sudo apt upgrade -y
+
+✔ Requisitos:
+
+Máquina Linux (VM)
+Acceso a consola (GRUB)
+Máquina cliente (Windows o Linux)
+============================================================
+🔓 PARTE 1: PASSWORD RECOVERY
+============================================================
+🔹 Paso 1: Acceder a GRUB
+Reiniciar sistema
+Presionar tecla ESC / SHIFT (según distro)
+Seleccionar sistema operativo
+Presionar "e" para editar
+🔹 Paso 2: Modificar arranque
+
+Buscar línea que comienza con:
+
+linux
+
+Agregar al final:
+
+init=/bin/bash
+🔹 Paso 3: Iniciar modo root
+
+👉 Presionar:
+
+Ctrl + X
+🔹 Paso 4: Habilitar escritura
+mount -o remount,rw /
+🔹 Paso 5: Cambiar contraseña
+Root
+passwd root
+Usuario
+passwd USUARIO
+🔹 Paso 6: Guardar y continuar
+sync
+exec /sbin/init
+⚠️ Errores comunes
+❌ No permite escribir → olvidar mount -o remount,rw /
+❌ Teclado distinto → usar layout inglés
+❌ GRUB no aparece → mantener SHIFT al arrancar
+============================================================
+🔑 PARTE 2: SSH CON LLAVES PÚBLICAS
+============================================================
+🔹 Paso 1: Instalar SSH (Servidor)
+sudo apt install openssh-server -y
+🔹 Paso 2: Iniciar servicio
+sudo systemctl enable ssh
+sudo systemctl start ssh
+🔹 Paso 3: Generar llaves (Cliente)
+En Linux o Windows (PowerShell):
+ssh-keygen -t ed25519
+
+👉 Presionar ENTER (sin passphrase)
+
+🔹 Paso 4: Copiar llave al servidor
+Método automático
+ssh-copy-id usuario@IP_SERVIDOR
+Método manual (si falla)
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+nano ~/.ssh/authorized_keys
+
+👉 Pegar clave pública
+
+chmod 600 ~/.ssh/authorized_keys
+🔹 Paso 5: Probar conexión
+ssh usuario@IP_SERVIDOR
+
+👉 Debe entrar sin pedir contraseña
+
+🔐 (Opcional pero recomendado) Deshabilitar contraseña SSH
+sudo nano /etc/ssh/sshd_config
+
+Modificar:
+
+PasswordAuthentication no
+PubkeyAuthentication yes
+🔹 Reiniciar SSH
+sudo systemctl restart ssh
+🧪 Validación
+
+✔ Acceso SSH sin contraseña
+✔ Sistema recuperado tras pérdida de acceso
+✔ Mayor seguridad (solo llaves)
+
+⚠️ Errores comunes
+❌ Permisos incorrectos
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+❌ No conecta por SSH
+sudo systemctl status ssh
+❌ Firewall bloquea
+sudo ufw allow 22
+❌ Clave no funciona
+
+👉 Verificar que sea la clave pública, no la privada
