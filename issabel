@@ -1,0 +1,166 @@
+☁️📞 Terraform + DigitalOcean + Issabel PBX (2 Extensiones)
+
+
+
+
+
+
+
+
+📌 Descripción
+
+Este proyecto implementa:
+
+☁️ Creación de una VM en DigitalOcean usando Terraform
+📞 Instalación de Issabel (PBX basado en Asterisk)
+📱 Configuración de 2 extensiones SIP
+🔗 Comunicación entre extensiones
+
+Simula un entorno básico de telefonía empresarial.
+
+⚙️ Prerrequisitos
+
+✔ Cuenta en DigitalOcean
+✔ Token API
+✔ Terraform instalado
+✔ SSH configurado
+
+============================================================
+☁️ PARTE 1: DESPLIEGUE CON TERRAFORM
+============================================================
+🔹 Crear carpeta del proyecto
+mkdir terraform-issabel
+cd terraform-issabel
+🔹 Crear archivo main.tf
+nano main.tf
+
+Contenido:
+
+terraform {
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+  }
+}
+
+provider "digitalocean" {
+  token = var.do_token
+}
+
+variable "do_token" {}
+
+resource "digitalocean_droplet" "issabel" {
+  name   = "issabel-vm"
+  region = "nyc1"
+  size   = "s-1vcpu-1gb"
+  image  = "ubuntu-22-04-x64"
+
+  ssh_keys = [var.ssh_key]
+}
+
+variable "ssh_key" {}
+🔹 Crear variables
+nano terraform.tfvars
+
+Contenido:
+
+do_token = "TU_TOKEN"
+ssh_key  = "TU_SSH_KEY_ID"
+🔹 Inicializar Terraform
+terraform init
+🔹 Crear VM
+terraform apply
+
+👉 Escribir yes
+
+🔹 Obtener IP
+terraform show
+🔹 Conectarse por SSH
+ssh usuario@IP_SERVIDOR
+============================================================
+📞 PARTE 2: INSTALACIÓN DE ISSABEL
+============================================================
+🔹 Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+🔹 Instalar dependencias
+sudo apt install wget -y
+🔹 Descargar Issabel
+wget http://repo.issabel.org/issabel4-netinstall.sh
+chmod +x issabel4-netinstall.sh
+🔹 Ejecutar instalador
+sudo ./issabel4-netinstall.sh
+
+👉 Esperar (puede tardar bastante)
+
+🔹 Acceder vía navegador
+http://IP_SERVIDOR
+============================================================
+📱 PARTE 3: CONFIGURAR EXTENSIONES
+============================================================
+🔹 Acceder a Issabel
+Usuario: admin
+Contraseña: (definida en instalación)
+🔹 Crear extensión 1
+
+Ir a:
+
+👉 PBX → Extensions → Add Extension
+
+Configurar:
+
+User Extension: 1001
+Display Name: Usuario1
+Secret: 1234
+
+Guardar y aplicar cambios.
+
+🔹 Crear extensión 2
+User Extension: 1002
+Display Name: Usuario2
+Secret: 1234
+============================================================
+📞 PARTE 4: PRUEBAS
+============================================================
+🔹 Usar softphone (Zoiper, Linphone, etc.)
+
+Configurar:
+
+Servidor: IP_SERVIDOR
+Usuario: 1001
+Password: 1234
+🔹 Segunda extensión
+Usuario: 1002
+Password: 1234
+🔹 Realizar llamada
+
+👉 1001 → llamar a → 1002
+
+✔ Debe establecerse comunicación
+
+⚠️ Errores comunes
+❌ No conecta a Issabel
+sudo ufw allow 80
+sudo ufw allow 5060
+sudo ufw allow 10000:20000/udp
+❌ SIP no registra
+Verificar IP pública
+Revisar NAT en Issabel
+❌ Instalación falla
+
+👉 Ejecutar como root o usar sudo correctamente
+
+❌ Terraform no crea VM
+Revisar token
+Revisar SSH key ID
+🔄 Alternativas
+
+✔ Usar imagen ISO de Issabel directamente
+✔ Usar Docker (menos común en PBX real)
+
+🧠 Explicación técnica
+Terraform → Infraestructura como código
+DigitalOcean → proveedor cloud
+Issabel → interfaz gráfica para Asterisk
+SIP → protocolo de señalización VoIP
