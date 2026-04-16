@@ -1,0 +1,7 @@
+Para usarlo:
+
+source chatgpt-cli/bin/activate
+export OPENAI_API_KEY="sk-proj-h_rRZNeqKYilzsFBEevmg5zXKeQqS6CqUyc0aZ4CYHjssTkcT3BlbkFJyrrMA1vrB4j0nwJgjG8HicOFtNGBk3GUbh-51bNPtQgtGRAA"
+python chatcli.py
+
+api token: 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
